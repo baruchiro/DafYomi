@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
     android:layout_width="match_parent"
@@ -8,10 +8,35 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
+    android:orientation="vertical"
     tools:context="baruch.rothkoff.dafyomi.MainActivity">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:id="@+id/main_txt_today"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
-</RelativeLayout>
+        android:textAlignment="center" />
+
+    <CheckedTextView
+        android:id="@+id/main_check_markdone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/mark_as_done"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"/>
+
+    <CheckedTextView
+        android:id="@+id/main_check_showdone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/show_dones"
+        android:checked="false"
+        android:checkMark="?android:attr/listChoiceIndicatorMultiple"/>
+
+   <android.support.v7.widget.RecyclerView
+       android:id="@+id/main_recycler"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:elevation="5dp">
+
+   </android.support.v7.widget.RecyclerView>
+</LinearLayout>
