@@ -31,10 +31,10 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private DafsAdapter dafsAdapter;
     public static HebrewDateFormatter hebrewDateFormatter;
-    private SharedPreferences sharedPreferences;
+    //private SharedPreferences sharedPreferences;
     private List<KeyAndValue<JewishCalendar, Boolean>> list;
     private JewishDate dateStart;
-    public static final Calendar START_13 = new GregorianCalendar(2012,8,3);
+
 
     private final String SHARED_NAME = "rothkoff.baruch.shared.file";
 
@@ -48,7 +48,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void InitMembers() {
-        sharedPreferences = getSharedPreferences(SHARED_NAME, MODE_PRIVATE);
 
         txtToday = (TextView) findViewById(R.id.main_txt_today);
         chkToday = (CheckedTextView) findViewById(R.id.main_check_markdone);
@@ -58,8 +57,6 @@ public class MainActivity extends AppCompatActivity {
 
         jewishCalendar = new JewishCalendar();
         hebrewDateFormatter = new HebrewDateFormatter();
-
-        dateStart = new JewishDate(new Date(sharedPreferences.getLong(DATE_START_PREF, new Date().getTime())));
 
         list = new ArrayList<>();
     }
@@ -71,7 +68,6 @@ public class MainActivity extends AppCompatActivity {
                 ChangeStatus(new JewishCalendar(), (CheckedTextView) v);
             }
         });
-        chkToday.setChecked(sharedPreferences.getBoolean(String.valueOf(getLongFromCalendar(new JewishCalendar())),false));
 
         chkShowDones.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,35 +85,33 @@ public class MainActivity extends AppCompatActivity {
         InitList();
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true));
-        dafsAdapter = new DafsAdapter(this,list);
+        dafsAdapter = new DafsAdapter(this, list);
         recyclerView.setAdapter(dafsAdapter);
     }
 
     private void ChangeStatus(JewishCalendar jewishCalendar, CheckedTextView v) {
         v.setChecked(!v.isChecked());
-
-        SharedPreferences.Editor sharedEditor = sharedPreferences.edit();
-        sharedEditor.putBoolean(
-                String.valueOf(getLongFromCalendar(jewishCalendar)), v.isChecked());
-        sharedEditor.apply();
     }
 
-    private long getLongFromCalendar(JewishCalendar jewishCalendar) {
-        Calendar c =new GregorianCalendar(
+    public static long getLongFromCalendar(JewishCalendar jewishCalendar) {
+        return new GregorianCalendar(
                 jewishCalendar.getGregorianYear(),
                 jewishCalendar.getGregorianMonth(),
-                jewishCalendar.getGregorianDayOfMonth());
-        return c.getTimeInMillis();
+                jewishCalendar.getGregorianDayOfMonth())
+                .getTimeInMillis();
+    }
+
+    public static long getLongFromCalendar(Calendar calendar) {
+        return new GregorianCalendar(
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH))
+                .getTimeInMillis();
     }
 
     private void InitList() {
-        Map<String, ?> m = sharedPreferences.getAll();
-        for (Map.Entry<String, ?> entry : m.entrySet()) {
-            if (entry.getValue() instanceof Boolean) {
-                JewishCalendar j = new JewishCalendar(new Date(Long.parseLong(entry.getKey())));
-                KeyAndValue<JewishCalendar, Boolean> daf = new KeyAndValue<>(j, (Boolean) entry.getValue());
-                list.add(daf);
-            }
-        }
+        DBhelper dBhelper = new DBhelper(this);
+        //long bbb = getLongFromCalendar(new JewishCalendar(new GregorianCalendar(2012, 8, 3)));
+        long d = dBhelper.insertDaf(new Daf(Daf.START_13));
     }
 }
