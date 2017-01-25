@@ -1,55 +1,82 @@
 package baruch.rothkoff.dafyomi;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
-import net.sourceforge.zmanim.hebrewcalendar.Daf;
-import net.sourceforge.zmanim.hebrewcalendar.JewishCalendar;
-
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.zip.Inflater;
-
-import static android.view.View.GONE;
+import java.io.ObjectInputValidation;
 
 
-public class DafsAdapter extends RecyclerView.Adapter<DafViewHolder> {
+public class DafsAdapter extends RecyclerView.Adapter<DafViewHolder> implements DafViewHolder.OnClickListener {
 
-    private List<KeyAndValue<JewishCalendar, Boolean>> list;
+    private DBhelper dBhelper;
+    private Cursor cursor;
     private Context context;
     private boolean showDones;
 
-    public DafsAdapter(Context context, List<KeyAndValue<JewishCalendar, Boolean>> list) {
+    public DafsAdapter(Context context, boolean showDones) {
+        if (!(context instanceof OnUpdateListener))
+            throw new IllegalArgumentException("contect must omplement OnUpdateListener");
         this.context = context;
-        this.list = list;
-        showDones = true;
-    }
-
-    @Override
-    public DafViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
-        return new DafViewHolder(LayoutInflater.from(context).inflate(R.layout.item_daf, parent, false));
-    }
-
-    @Override
-    public void onBindViewHolder(DafViewHolder holder, int position) {
-        boolean isDone = list.get(position).getValue();
-            Daf daf = list.get(position).getKey().getDafYomiBavli();
-            String dafString = MainActivity.hebrewDateFormatter.formatDafYomiBavli(daf);
-            holder.Init(dafString, isDone);
-
-        holder.setVisibility(!(!showDones&&isDone));
-    }
-
-    public void ShowDones(boolean showDones) {
+        this.dBhelper = new DBhelper(context);
         this.showDones = showDones;
+        this.Refresh();
+    }
+
+    public void Refresh() {
+        if (showDones) cursor = dBhelper.getAllDafs();
+        else cursor = dBhelper.getNotDone();
         notifyDataSetChanged();
     }
 
     @Override
+    public DafViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_daf, parent, false);
+        return new DafViewHolder(view, this);
+    }
+
+    @Override
+    public void onBindViewHolder(DafViewHolder holder, int position) {
+        cursor.moveToPosition(position);
+        Daf daf = new Daf(
+                cursor.getLong(cursor.getColumnIndex(Daf.DAF_FIELD_ID)),
+                cursor.getString(cursor.getColumnIndex(Daf.DAF_FIELD_NAME)),
+                cursor.getInt(cursor.getColumnIndex(Daf.DAF_FIELD_DONE)) == 1
+        );
+        holder.Init(daf);
+    }
+
+    public void ShowDones(boolean showDones) {
+        this.showDones = showDones;
+        Refresh();
+    }
+
+    @Override
     public int getItemCount() {
-        return list.size();
+        return cursor.getCount();
+    }
+
+    @Override
+    public void onClick(DafViewHolder holder, Daf daf) {
+        daf.setDone(!daf.isDone());
+        dBhelper.updateDaf(daf);
+        ((OnUpdateListener)context).onUpdate(daf);
+    }
+
+    public void add(Daf daf) {
+        dBhelper.insertDaf(daf);
+        Refresh();
+    }
+
+    public void update(Daf daf) {
+        dBhelper.updateDaf(daf);
+        Refresh();
+    }
+
+    public interface OnUpdateListener {
+        void onUpdate(Daf daf);
     }
 }

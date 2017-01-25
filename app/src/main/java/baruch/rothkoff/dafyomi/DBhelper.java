@@ -1,6 +1,5 @@
 package baruch.rothkoff.dafyomi;
 
-import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -10,16 +9,12 @@ import android.util.Log;
 import net.sourceforge.zmanim.hebrewcalendar.JewishCalendar;
 
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 
 public final class DBhelper extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "MyDBName.db";
     public static final String DAFS_TABLE_NAME = "dafs";
-    public static final String DAFS_COLUMN_ID = "id";
-    public static final String DAFS_COLUMN_NAME = "name";
-    public static final String DAFS_COLUMN_DONE = "done";
     private HashMap hp;
 
     public DBhelper(Context context) {
@@ -32,16 +27,16 @@ public final class DBhelper extends SQLiteOpenHelper {
                 "create table " + DAFS_TABLE_NAME +
                         " (id long primary key, name text, done boolean)"
         );
-        Log.i("DBHelper","Create table: "+DAFS_TABLE_NAME);
+        Log.i("DBHelper", "Create table: " + DAFS_TABLE_NAME);
 
         long now = MainActivity.getLongFromCalendar(new JewishCalendar());
-        Log.i("DBHelper", "now: "+now);
+        Log.i("DBHelper", "now: " + now);
         JewishCalendar i = new JewishCalendar(new Date(Daf.START_13));
 
         while (MainActivity.getLongFromCalendar(i) < now) {
             Daf daf = new Daf(i, true);
             insertDaf(db, daf);
-            Log.i("DBHelper",daf.toString() );
+            Log.i("DBHelper", daf.toString());
             i.forward();
         }
     }
@@ -57,16 +52,27 @@ public final class DBhelper extends SQLiteOpenHelper {
         return insertDaf(db, daf);
     }
 
-    public Cursor getDaf(long id){
+    public Cursor getDaf(long id) {
         SQLiteDatabase db = this.getReadableDatabase();
-        return db.rawQuery("SELECT * FROM "+DAFS_TABLE_NAME+" WHERE id="+id+"",null);
+        return db.rawQuery("SELECT * FROM " + DAFS_TABLE_NAME + " WHERE id=" + id + "", null);
     }
 
     private long insertDaf(SQLiteDatabase db, Daf daf) {
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(DAFS_COLUMN_ID, daf.getId());
-        contentValues.put(DAFS_COLUMN_NAME, daf.getName());
-        contentValues.put(DAFS_COLUMN_DONE, daf.isDone());
-        return db.insert(DAFS_TABLE_NAME, null, contentValues);
+        return db.insert(DAFS_TABLE_NAME, null, daf.getContentValues());
+    }
+
+    public Cursor getAllDafs() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + DAFS_TABLE_NAME + " ORDER BY id ASC", null);
+    }
+
+    public Cursor getNotDone() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        return db.rawQuery("SELECT * FROM " + DAFS_TABLE_NAME + " WHERE " + Daf.DAF_FIELD_DONE + "=0 ORDER BY id DESC", null);
+    }
+
+    public long updateDaf(Daf daf) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.update(DAFS_TABLE_NAME, daf.getContentValues(), "id=" + daf.getId(), null);
     }
 }
