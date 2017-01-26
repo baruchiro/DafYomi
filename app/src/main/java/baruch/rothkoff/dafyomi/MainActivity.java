@@ -9,6 +9,11 @@ import android.widget.Button;
 import android.widget.CheckedTextView;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
+
 import net.sourceforge.zmanim.hebrewcalendar.HebrewDateFormatter;
 import net.sourceforge.zmanim.hebrewcalendar.JewishCalendar;
 
@@ -24,6 +29,7 @@ public class MainActivity extends AppCompatActivity implements DafsAdapter.OnUpd
     private Daf today;
     private RecyclerView recyclerView;
     private DafsAdapter dafsAdapter;
+    private InterstitialAd interstitialAd;
     public static HebrewDateFormatter hebrewDateFormatter;
 
 
@@ -34,8 +40,13 @@ public class MainActivity extends AppCompatActivity implements DafsAdapter.OnUpd
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        MobileAds.initialize(getApplicationContext(), getString(R.string.app_ad_unit));
+
+
         InitMembers();
         BehaviorMembers();
+
+        loadAd();
     }
 
     private void InitMembers() {
@@ -50,6 +61,8 @@ public class MainActivity extends AppCompatActivity implements DafsAdapter.OnUpd
         hebrewDateFormatter = new HebrewDateFormatter();
         hebrewDateFormatter.setHebrewFormat(true);
         today = new Daf(new JewishCalendar(), false);
+
+        interstitialAd = new InterstitialAd(this);
 
     }
 
@@ -72,6 +85,7 @@ public class MainActivity extends AppCompatActivity implements DafsAdapter.OnUpd
         btnUpdateList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (interstitialAd.isLoaded())interstitialAd.show();
                 dafsAdapter.Refresh();
             }
         });
@@ -85,6 +99,15 @@ public class MainActivity extends AppCompatActivity implements DafsAdapter.OnUpd
         recyclerView.setAdapter(dafsAdapter);
 
         dafsAdapter.add(today);
+
+        interstitialAd.setAdUnitId(getString(R.string.interst_ad_unit_id));
+        interstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed() {
+                super.onAdClosed();
+                loadAd();
+            }
+        });
     }
 
     private void ChangeStatus(CheckedTextView v) {
@@ -120,5 +143,13 @@ public class MainActivity extends AppCompatActivity implements DafsAdapter.OnUpd
             chkToday.setChecked(daf.isDone());
             today.setDone(daf.isDone());
         }
+    }
+
+    private void loadAd(){
+        AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(getString(R.string.test_device))
+                .build();
+
+        interstitialAd.loadAd(adRequest);
     }
 }
